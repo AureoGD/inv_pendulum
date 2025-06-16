@@ -1,4 +1,4 @@
 __pycache__
 .style.yapf
-models
+models/
 
