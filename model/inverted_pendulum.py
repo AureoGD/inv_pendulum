@@ -1,6 +1,7 @@
 from math import cos, sin
 import numpy as np
 
+
 class InvePendulum():
     """
     A class to simulate the inverted pendulum system as described in the paper
@@ -24,28 +25,29 @@ class InvePendulum():
         a (float): Current angle of the pendulum in radians.
         da (float): Current angular velocity of the pendulum.
     """
-    def __init__(self, dt=0.02):
+
+    def __init__(self, dt=0.002):
         """
         Initializes the inverted pendulum simulation environment.
 
         Args:
             dt (float, optional): The simulation time step. Defaults to 0.02.
         """
-        # Parameters from Table in "Controller Scheduling by Neural Networks" 
-        self.Jt = 0.6650        # Inertia of the base (Kg)
-        self.m = 0.21           # Mass of the pendulum (Kg)
-        self.l = 0.61           # Length of the pendulum (m)
-        self.br = 0.1           # Friction coefficient of the base (Kg/s)
-        self.g = 9.8            # Gravitational acceleration (m/s^2)
-        
-        # System constraints 
-        self.f_max = 2.0        # Max force (N)
-        self.v_max = 3.0        # Max velocity (m/s)
-        self.x_max = 2.0        # Max position (m)
-        
+        # Parameters from Table in "Controller Scheduling by Neural Networks"
+        self.Jt = 0.6650  # Inertia of the base (Kg)
+        self.m = 0.21  # Mass of the pendulum (Kg)
+        self.l = 0.61  # Length of the pendulum (m)
+        self.br = 0.2  # Friction coefficient of the base (Kg/s)
+        self.g = 9.8  # Gravitational acceleration (m/s^2)
+
+        # System constraints
+        self.f_max = 20.0  # Max force (N)
+        self.v_max = 3.0  # Max velocity (m/s)
+        self.x_max = 2.0  # Max position (m)
+
         # Simulation time step
         self.dt = dt
-        
+
         # Initialize state variables
         self.reset()
 
@@ -69,10 +71,10 @@ class InvePendulum():
         """
         # Clamp the input force to its maximum value
         force = np.clip(force, -self.f_max, self.f_max)
-        
+
         # Get current state for easier access
         x, dx, a, da = self.x, self.dx, self.a, self.da
-        
+
         # --- Solve the system of linear equations for accelerations ---
         # The equations can be written in matrix form A * acc = B, where
         # acc is the vector [ddx, dda]^T.
@@ -81,7 +83,7 @@ class InvePendulum():
         a_11 = self.Jt
         a_12 = 0.5 * self.m * self.l * cos(a)
         a_21 = 0.5 * self.m * cos(a)
-        a_22 = (1.0/3.0) * self.m * self.l
+        a_22 = (1.0 / 3.0) * self.m * self.l
         A = np.array([[a_11, a_12], [a_21, a_22]])
 
         # Define the B vector
@@ -102,15 +104,15 @@ class InvePendulum():
         self.x += self.dx * self.dt
         self.da += dda * self.dt
         self.a += self.da * self.dt
-        
+
         # Enforce state constraints
         self.x = np.clip(self.x, -self.x_max, self.x_max)
         self.dx = np.clip(self.dx, -self.v_max, self.v_max)
-        
+
         # If the cart hits a boundary, its velocity becomes zero
         if self.x == -self.x_max or self.x == self.x_max:
             self.dx = 0.0
-            
+
         return self.get_state()
 
     def reset(self, initial_state=(0.0, 0.0, 0.0, 0.0)):
@@ -136,32 +138,37 @@ class InvePendulum():
         """
         return (self.x, self.dx, self.a, self.da)
 
+
 # --- Example of how to use the class ---
 if __name__ == '__main__':
     # Create an instance of the pendulum simulation
     pendulum = InvePendulum(dt=0.01)
-    
+
     # Reset the pendulum to a starting angle of 0.5 radians (about 28.6 degrees)
-    # This is the initial condition used in the paper's trajectory simulation 
-    initial_a = 0.5 
+    # This is the initial condition used in the paper's trajectory simulation
+    initial_a = 0.5
     state = pendulum.reset(initial_state=(0.0, 0.0, initial_a, 0.0))
-    print(f"Starting simulation from state: (x={state[0]:.2f}, dx={state[1]:.2f}, a={state[2]:.2f}, da={state[3]:.2f})")
-    
+    print(
+        f"Starting simulation from state: (x={state[0]:.2f}, dx={state[1]:.2f}, a={state[2]:.2f}, da={state[3]:.2f})"
+    )
+
     # Run the simulation for a few steps with a constant force
     applied_force = 1.5  # Newtons
     simulation_time = 2.0  # Seconds
     num_steps = int(simulation_time / pendulum.dt)
-    
-    print(f"\nApplying a constant force of {applied_force} N for {simulation_time} seconds...")
+
+    print(
+        f"\nApplying a constant force of {applied_force} N for {simulation_time} seconds..."
+    )
     for step in range(num_steps):
         state = pendulum.step_sim(applied_force)
-        
+
         # Print the state every 0.5 seconds
         if (step * pendulum.dt) % 0.5 == 0:
-             print(f"Time: {step * pendulum.dt:.2f}s | "
-                   f"x: {state[0]:.3f}m | "
-                   f"dx: {state[1]:.3f}m/s | "
-                   f"Angle: {state[2]:.3f}rad | "
-                   f"da: {state[3]:.3f}rad/s")
-                   
+            print(f"Time: {step * pendulum.dt:.2f}s | "
+                  f"x: {state[0]:.3f}m | "
+                  f"dx: {state[1]:.3f}m/s | "
+                  f"Angle: {state[2]:.3f}rad | "
+                  f"da: {state[3]:.3f}rad/s")
+
     print("\nSimulation finished.")
