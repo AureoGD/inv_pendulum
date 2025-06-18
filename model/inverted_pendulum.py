@@ -34,8 +34,8 @@ class InvePendulum():
             dt (float, optional): The simulation time step. Defaults to 0.02.
         """
         # Parameters from Table in "Controller Scheduling by Neural Networks"
-        self.Jt = 0.6650  # Inertia of the base (Kg)
-        self.m = 0.21  # Mass of the pendulum (Kg)
+        self.mc = 0.6650  # Inertia of the base (Kg)
+        self.mr = 0.21  # Mass of the pendulum (Kg)
         self.l = 0.61  # Length of the pendulum (m)
         self.br = 0.2  # Friction coefficient of the base (Kg/s)
         self.g = 9.8  # Gravitational acceleration (m/s^2)
@@ -44,6 +44,7 @@ class InvePendulum():
         self.f_max = 20.0  # Max force (N)
         self.v_max = 3.0  # Max velocity (m/s)
         self.x_max = 2.0  # Max position (m)
+        self.da_max = 5.0  # Max angular speed (rad/s)
 
         # Simulation time step
         self.dt = dt
@@ -80,15 +81,15 @@ class InvePendulum():
         # acc is the vector [ddx, dda]^T.
 
         # Define the A matrix
-        a_11 = self.Jt
-        a_12 = 0.5 * self.m * self.l * cos(a)
-        a_21 = 0.5 * self.m * cos(a)
-        a_22 = (1.0 / 3.0) * self.m * self.l
+        a_11 = self.mc
+        a_12 = 0.5 * self.mr * self.l * cos(a)
+        a_21 = 0.5 * self.mr * cos(a)
+        a_22 = (1.0 / 3.0) * self.mr * self.l
         A = np.array([[a_11, a_12], [a_21, a_22]])
 
         # Define the B vector
-        b_1 = force - self.br * dx + 0.5 * self.m * self.l * (da**2) * sin(a)
-        b_2 = 0.5 * self.m * self.g * sin(a)
+        b_1 = force - self.br * dx + 0.5 * self.mr * self.l * (da**2) * sin(a)
+        b_2 = 0.5 * self.mr * self.g * sin(a)
         B = np.array([b_1, b_2])
 
         try:

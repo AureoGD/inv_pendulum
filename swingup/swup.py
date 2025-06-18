@@ -14,17 +14,17 @@ class SwingUp:
             pendulum_params: An object or namespace with m, l, g, f_max.
             gain (float): Energy control gain (tune as needed).
         """
-        self.Jt = pendulum_params.Jt
-        self.m = pendulum_params.m
+        self.mc = pendulum_params.mc
+        self.mr = pendulum_params.mr
         self.l = pendulum_params.l
         self.g = pendulum_params.g
         self.f_max = pendulum_params.f_max
 
         # Moment of inertia of a rod pivoting at the base
-        self.I = (1 / 3) * self.m * self.l**2
+        self.I = (1 / 3) * self.mr * self.l**2
 
         # Desired total energy at the upright position
-        self.E_desired = self.m * self.g * self.l
+        self.E_desired = self.mr * self.g * self.l
 
         # Gain for energy pump
         self.k = gain
@@ -40,7 +40,7 @@ class SwingUp:
         _, _, a, da = states
 
         # Current pendulum energy
-        E = 0.5 * self.I * da**2 - self.m * self.g * self.l * cos(a)
+        E = 0.5 * self.I * da**2 - self.mr * self.g * self.l * cos(a)
 
         # Energy pumping law: sign synchronizes with swing phase
         u = -self.k * E * np.sign(-da)
