@@ -57,10 +57,8 @@ class InvPendulumEnv(gym.Env):
         self.current_step = 0
         self.ep_reward = 0
         x0 = np.array([
-            self.scale_factor * np.random.uniform(-self.inv_pendulum.x_max, self.inv_pendulum.x_max),
-            0 * np.random.uniform(-self.inv_pendulum.v_max, self.inv_pendulum.v_max),
-            self.scale_factor * np.random.uniform(-np.pi, np.pi),
-            0 * np.random.uniform(-self.inv_pendulum.da_max, self.inv_pendulum.da_max)
+            self.scale_factor * np.random.uniform(-self.inv_pendulum.x_max, self.inv_pendulum.x_max), 0,
+            self.scale_factor * np.random.uniform(-np.pi, np.pi), 0
         ])
         # x0 = np.array([0, 0, np.pi, 0])
         state = self._norm(self.inv_pendulum.reset(x0))
