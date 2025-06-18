@@ -48,9 +48,9 @@ class InvPendulumEnv(gym.Env):
         truncated = done
         info = {}
 
-        return new_state, reward, terminated, info, truncated
+        return new_state, reward, terminated, truncated, info
 
-    def reset(self, seed=None):
+    def reset(self, *, seed=None, options=None):
         super().reset(seed=seed)
         self.ep += 1
         ep_r = self.ep_reward
