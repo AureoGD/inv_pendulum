@@ -1,0 +1,29 @@
+
+# Trainer settings
+agent_class_name: "SacCasAgent" # To be used by run_experiment.py to import the class
+agent_module_name: "sac_cas.sac_cas_agent" # Path to the agent module
+
+training_total_timesteps: 3_000_000   # Or a bit more to see clear learning, e.g., 100k
+max_steps_per_episode: 5000       
+log_interval_timesteps: 2000    
+eval_frequency_timesteps: 5000  
+n_eval_episodes: 5              
+save_freq_episodes: 50         
+log_root: "sb3/tensorboard/sac"     
+model_root: "sb3/model/sac"   
+
+use_encoder: False             
+encoder_mlp_hidden_dims: []
+
+gamma: 0.99                     
+tau: 0.005                      
+alpha_init: "auto"                   
+critic_lr: 0.0003               
+actor_lr: 0.0003                
+replay_buffer_size: 100000
+batch_size: 256                 
+learning_starts: 1000
+gradient_steps: 1               
+policy_delay: 2                 
+max_grad_norm: 1.0
+reward_scale: 1.0               
