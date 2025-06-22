@@ -28,15 +28,12 @@ def main(args):
     env = InvPendulumEnv(dt=0.002, rendering=True)
 
     # Evaluate quantitatively
-    mean_reward, std_reward = evaluate_policy(
-        model,
-        env,
-        n_eval_episodes=args.eval_episodes,
-        deterministic=True,
-        render=False)
-    print(
-        f"\nMean reward over {args.eval_episodes} episodes: {mean_reward:.2f} +/- {std_reward:.2f}\n"
-    )
+    mean_reward, std_reward = evaluate_policy(model,
+                                              env,
+                                              n_eval_episodes=args.eval_episodes,
+                                              deterministic=True,
+                                              render=False)
+    print(f"\nMean reward over {args.eval_episodes} episodes: {mean_reward:.2f} +/- {std_reward:.2f}\n")
 
     # Visualize qualitatively
     obs, _ = env.reset()
@@ -53,18 +50,9 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--algo",
-                        type=str,
-                        default="ppo",
-                        help="Algorithm: ppo or sac")
-    parser.add_argument("--eval-episodes",
-                        type=int,
-                        default=10,
-                        help="Number of eval episodes for mean reward")
-    parser.add_argument("--render-steps",
-                        type=int,
-                        default=500,
-                        help="Number of steps to render for visualization")
+    parser.add_argument("--algo", type=str, default="sac", help="Algorithm: ppo or sac")
+    parser.add_argument("--eval-episodes", type=int, default=10, help="Number of eval episodes for mean reward")
+    parser.add_argument("--render-steps", type=int, default=500, help="Number of steps to render for visualization")
     args = parser.parse_args()
 
     main(args)

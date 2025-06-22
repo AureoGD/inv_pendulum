@@ -9,11 +9,7 @@ import time
 
 class InvPendulumEnv(gym.Env):
 
-    def __init__(self,
-                 dt=0.002,
-                 max_step=5000,
-                 rendering=False,
-                 frame_rate=30):
+    def __init__(self, dt=0.002, max_step=5000, rendering=False, frame_rate=30):
         super().__init__()
 
         self.rendering = rendering
@@ -26,15 +22,9 @@ class InvPendulumEnv(gym.Env):
         if self.rendering:
             self.pendulum_renderer = PendulumLiveRenderer(self.inv_pendulum)
 
-        self.action_space = gym.spaces.Box(low=-1,
-                                           high=1,
-                                           shape=(1, ),
-                                           dtype=np.float32)
+        self.action_space = gym.spaces.Box(low=-1, high=1, shape=(1, ), dtype=np.float32)
         # For now, a simple observation space. The satates must be normalized
-        self.observation_space = gym.spaces.Box(low=-1,
-                                                high=1,
-                                                shape=(4, ),
-                                                dtype=np.float32)
+        self.observation_space = gym.spaces.Box(low=-1, high=1, shape=(4, ), dtype=np.float32)
 
         self.scale_factor = 0.75
         self.ep_reward = 0
@@ -46,8 +36,7 @@ class InvPendulumEnv(gym.Env):
         force = self.inv_pendulum.f_max * np.clip(action[0], -1, 1)
 
         new_state = self._norm(self.inv_pendulum.step_sim(force))
-        if self.rendering and (self.current_step % self.frame_rate == 0
-                               or self.current_step == 0):
+        if self.rendering and (self.current_step % self.frame_rate == 0 or self.current_step == 0):
             self.render()
             time.sleep(self.dt * self.frame_rate)
 
@@ -72,8 +61,7 @@ class InvPendulumEnv(gym.Env):
         self.current_step = 0
         self.ep_reward = 0
         x0 = np.array([
-            self.scale_factor * np.random.uniform(-self.inv_pendulum.x_max,
-                                                  self.inv_pendulum.x_max), 0,
+            self.scale_factor * np.random.uniform(-self.inv_pendulum.x_max, self.inv_pendulum.x_max), 0,
             self.scale_factor * np.random.uniform(-np.pi, np.pi), 0
         ])
         # x0 = np.array([0, 0, np.pi, 0])
@@ -108,8 +96,8 @@ class InvPendulumEnv(gym.Env):
         r = 0
 
         # model PPO 2025-06-19_11-35-44
-        # if angle < 0.2:
-        #     r += 1 + (2 - pos) * 0.5
+        if angle < 0.2:
+            r += 1 + (2 - pos) * 0.5
 
         # model PPO 2025-06-19_10-51-44
         # if angle < 0.2:
@@ -119,8 +107,8 @@ class InvPendulumEnv(gym.Env):
 
         # model PPO 2025-06-19_10-06-45
         # if angle < 0.2:
-        #     return 0.01
+        #     return 1
 
-        r = -(abs(angle) - np.pi) * 0.01
+        # r = -(abs(angle) - np.pi) * 0.01
 
         return r
