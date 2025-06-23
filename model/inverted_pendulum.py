@@ -41,7 +41,7 @@ class InvePendulum():
         self.g = 9.8  # Gravitational acceleration (m/s^2)
 
         # System constraints
-        self.f_max = 20.0  # Max force (N)
+        self.f_max = 3.0  # Max force (N)
         self.v_max = 3.0  # Max velocity (m/s)
         self.x_max = 2.0  # Max position (m)
         self.da_max = 10  # Max angular speed (rad/s)
@@ -75,11 +75,9 @@ class InvePendulum():
 
         # Check if the cart is at a boundary and being pushed further into it
         # If at x_max and dx > 0 or force > 0
-        at_positive_limit = (x >= self.x_max
-                             and (dx > 0 or effective_force > 0))
+        at_positive_limit = (x >= self.x_max and (dx > 0 or effective_force > 0))
         # If at -x_max and dx < 0 or force < 0
-        at_negative_limit = (x <= -self.x_max
-                             and (dx < 0 or effective_force < 0))
+        at_negative_limit = (x <= -self.x_max and (dx < 0 or effective_force < 0))
 
         if at_positive_limit or at_negative_limit:
             effective_dx = 0.0  # Effectively zero out velocity at boundary
@@ -108,8 +106,7 @@ class InvePendulum():
             # This becomes a simpler system where ddx = 0.
             # So, we can directly calculate dda from the second equation with ddx=0.
             ddx = 0.0
-            dda = (0.5 * self.mr * self.g * sin(a)) / (
-                (1.0 / 3.0) * self.mr * self.l)
+            dda = (0.5 * self.mr * self.g * sin(a)) / ((1.0 / 3.0) * self.mr * self.l)
             # Simplified dda = (1.5 * self.g * sin(a)) / self.l
 
         else:
@@ -123,8 +120,7 @@ class InvePendulum():
 
             # Define the B vector
             # Use effective_force and effective_dx if they were modified, otherwise they are original.
-            b_1 = effective_force - self.br * effective_dx + 0.5 * self.mr * self.l * (
-                da**2) * sin(a)
+            b_1 = effective_force - self.br * effective_dx + 0.5 * self.mr * self.l * (da**2) * sin(a)
             b_2 = 0.5 * self.mr * self.g * sin(a)
             B = np.array([b_1, b_2])
 
@@ -195,18 +191,14 @@ if __name__ == '__main__':
     # This is the initial condition used in the paper's trajectory simulation
     initial_a = 0.5
     state = pendulum.reset(initial_state=(0.0, 0.0, initial_a, 0.0))
-    print(
-        f"Starting simulation from state: (x={state[0]:.2f}, dx={state[1]:.2f}, a={state[2]:.2f}, da={state[3]:.2f})"
-    )
+    print(f"Starting simulation from state: (x={state[0]:.2f}, dx={state[1]:.2f}, a={state[2]:.2f}, da={state[3]:.2f})")
 
     # Run the simulation for a few steps with a constant force
     applied_force = 1.5  # Newtons
     simulation_time = 2.0  # Seconds
     num_steps = int(simulation_time / pendulum.dt)
 
-    print(
-        f"\nApplying a constant force of {applied_force} N for {simulation_time} seconds..."
-    )
+    print(f"\nApplying a constant force of {applied_force} N for {simulation_time} seconds...")
     for step in range(num_steps):
         state = pendulum.step_sim(applied_force)
 

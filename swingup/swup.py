@@ -8,7 +8,7 @@ class SwingUp:
     It injects energy into the pendulum to swing it up to the top.
     """
 
-    def __init__(self, pendulum_params, gain=10):
+    def __init__(self, pendulum_params, gain=1.7):
         """
         Args:
             pendulum_params: An object or namespace with m, l, g, f_max.

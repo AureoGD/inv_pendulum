@@ -5,7 +5,7 @@ from cont_env.pendulum_env import InvPendulumEnv
 
 def run_test():
     # Create the environment
-    env = InvPendulumEnv(max_step=5000, rendering=True)
+    env = InvPendulumEnv(env_id=0, max_step=5000, rendering=True)
 
     # Reset environment
     obs, info = env.reset()

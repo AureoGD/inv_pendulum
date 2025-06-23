@@ -26,12 +26,7 @@ if __name__ == '__main__':
     state = env.reset(initial_state=INITIAL_STATE)
     print(f"Starting simulation (alpha={state[2]:.2f} rad)...")
 
-    history = {
-        'time': [],
-        'states': [],
-        'control_effort': [],
-        'active_controller': []
-    }
+    history = {'time': [], 'states': [], 'control_effort': [], 'active_controller': []}
 
     num_steps = int(SIMULATION_TIME / DT)
     count = 0
@@ -46,6 +41,8 @@ if __name__ == '__main__':
         else:
             mode = 1  # Stabilize
             force = stabilization_controller.update_control(state)
+
+        force = np.clip(force, -3, 3)
 
         history['time'].append(i * DT)
         history['states'].append(state)
@@ -68,10 +65,7 @@ if __name__ == '__main__':
     fig.suptitle("Swing-Up and Stabilization Control", fontsize=16)
 
     axs[0].plot(history['time'], angles_wrapped)
-    axs[0].axhline(y=STABILIZATION_THRESHOLD,
-                   color='r',
-                   linestyle='--',
-                   label='Stabilization Region')
+    axs[0].axhline(y=STABILIZATION_THRESHOLD, color='r', linestyle='--', label='Stabilization Region')
     axs[0].axhline(y=-STABILIZATION_THRESHOLD, color='r', linestyle='--')
     axs[0].set_ylabel("Angle (rad)")
     axs[0].set_title("Pendulum Angle Trajectory")
@@ -134,8 +128,7 @@ if __name__ == '__main__':
 
     def update(frame):
         cart_x = x_anim[frame]
-        cart.set_xy(
-            (cart_x - cart_width / 2, -cart_height))  # cart below pivot
+        cart.set_xy((cart_x - cart_width / 2, -cart_height))  # cart below pivot
         pivot_y = 0
         px = cart_x + l * np.sin(a_anim[frame])
         py = pivot_y + l * np.cos(a_anim[frame])  # <-- FLIP SIGN HERE
@@ -143,11 +136,6 @@ if __name__ == '__main__':
         line.set_data([cart_x, px], [pivot_y, py])
         return cart, line
 
-    ani = animation.FuncAnimation(fig2,
-                                  update,
-                                  frames=len(x_anim),
-                                  init_func=init,
-                                  blit=True,
-                                  interval=1000 / FPS)
+    ani = animation.FuncAnimation(fig2, update, frames=len(x_anim), init_func=init, blit=True, interval=1000 / FPS)
 
     plt.show()

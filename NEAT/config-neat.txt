@@ -1,0 +1,98 @@
+# =================================================================
+#  Final, Complete, and Well-Documented Configuration for NEAT
+# =================================================================
+
+[NEAT]
+# --- Global NEAT settings ---
+fitness_criterion      = max
+fitness_threshold      = 9750.0
+pop_size               = 150
+reset_on_extinction    = True
+
+
+[DefaultGenome]
+# --- Settings for the structure and mutation of individual genomes ---
+
+# --- Network Topology Settings ---
+feed_forward            = True
+initial_connection      = full
+
+# --- Network I/O and Hidden Layer Size (CRITICAL) ---
+num_inputs              = 4
+num_outputs             = 1
+num_hidden              = 0
+
+# --- Structural Mutation Rates (How the network grows) ---
+conn_add_prob           = 0.5
+conn_delete_prob        = 0.5
+node_add_prob           = 0.2
+node_delete_prob        = 0.2
+
+# --- Connection `enabled` Gene Settings ---
+# A connection can be disabled/re-enabled. This is a core NEAT feature.
+enabled_default         = True
+enabled_mutate_rate     = 0.01
+
+# --- Weight and Bias Settings (Numerical properties) ---
+bias_init_mean          = 0.0
+bias_init_stdev         = 1.0
+bias_max_value          = 10.0
+bias_min_value          = -10.0
+bias_mutate_power       = 0.5
+bias_mutate_rate        = 0.7
+bias_replace_rate       = 0.1
+
+weight_init_mean        = 0.0
+weight_init_stdev       = 1.0
+weight_max_value        = 10.0
+weight_min_value        = -10.0
+weight_mutate_power     = 0.5
+weight_mutate_rate      = 0.8
+weight_replace_rate     = 0.1
+
+# --- Node `response` Gene Settings ---
+# This acts as a gain/multiplier on a node's activation.
+# A mutate_rate of 0.0 means it is initialized but never changes. This is fine.
+response_init_mean      = 1.0
+response_init_stdev     = 0.0
+response_max_value      = 10.0
+response_min_value      = -10.0
+response_mutate_power   = 0.0
+response_mutate_rate    = 0.0
+response_replace_rate   = 0.0
+
+# --- Speciation Compatibility Settings ---
+# These coefficients determine how genomes are grouped into species.
+compatibility_disjoint_coefficient = 1.0
+compatibility_weight_coefficient   = 0.5
+
+# --- Node Activation and Aggregation Settings ---
+activation_default      = tanh
+activation_mutate_rate  = 0.0
+activation_options      = relu clamped tanh sin gauss abs
+
+aggregation_default     = sum
+aggregation_mutate_rate = 0.0
+aggregation_options     = sum
+
+
+[DefaultSpeciesSet]
+# This threshold determines when a genome is different enough to be in a new species.
+# Higher values -> fewer species. Lower values -> more species.
+compatibility_threshold = 3.0
+
+
+[DefaultStagnation]
+# --- Settings to handle species that are not improving ---
+# Generations a species can go without improving before it is removed.
+max_stagnation        = 20
+# Number of top individuals in a species guaranteed to survive, regardless of stagnation.
+species_elitism       = 2
+
+
+[DefaultReproduction]
+# --- Settings for creating the next generation ---
+# Number of "elite" individuals from each species copied unchanged to the next generation.
+elitism                 = 2
+# Fraction of the next generation created by crossover (the rest is by mutation).
+survival_threshold      = 0.2

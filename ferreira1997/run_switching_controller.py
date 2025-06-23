@@ -7,7 +7,8 @@ import os
 from model.inverted_pendulum import InvePendulum
 from controllers import LQR, SlidingMode
 from neural_network import PerformanceIndexNN
-
+from model.pendulum_animation import PendulumLiveRenderer
+import time
 # --- Configuration ---
 # --- Configuration ---
 MODEL_DIR = "models"
@@ -19,20 +20,16 @@ print(f"Using device: {DEVICE}")
 if __name__ == '__main__':
     # --- Check for trained models ---
     if not os.path.exists(MODEL_DIR):
-        print(
-            f"Error: Directory '{MODEL_DIR}' not found. Please run train.py first."
-        )
+        print(f"Error: Directory '{MODEL_DIR}' not found. Please run train.py first.")
         exit()
 
     # --- Initialize Environment and Controllers ---
     env = InvePendulum(dt=DT)
-
+    pendulum_renderer = PendulumLiveRenderer(env)
     controller_configs = {
-        "LQR": LQR(10.0, 12.60, 48.33,
-                   9.09),  # Standard LQR gains from the paper 
+        "LQR": LQR(10.0, 12.60, 48.33, 9.09),  # Standard LQR gains from the paper 
         "SM": SlidingMode(env),  # Sliding Mode controller 
-        "VF": LQR(0, 30.92, 87.63,
-                  20.40)  # Velocity Feedback (VF) LQR gains from the paper 
+        "VF": LQR(0, 30.92, 87.63, 20.40)  # Velocity Feedback (VF) LQR gains from the paper 
     }
     controllers = list(controller_configs.values())
     controller_names = list(controller_configs.keys())
@@ -43,9 +40,7 @@ if __name__ == '__main__':
     for name in controller_names:
         model_path = os.path.join(MODEL_DIR, f"{name.lower()}_model.pth")
         if not os.path.exists(model_path):
-            print(
-                f"Error: Model file '{model_path}' not found. Please run train.py first."
-            )
+            print(f"Error: Model file '{model_path}' not found. Please run train.py first.")
             exit()
 
         # Instantiate the model, move to device, then load the state dictionary
@@ -62,12 +57,11 @@ if __name__ == '__main__':
     state = env.reset(initial_state=initial_state)
 
     history = {'time': [], 'states': [], 'chosen_controller': []}
-
+    pendulum_renderer.init_live_render()
     num_steps = int(SIMULATION_TIME / DT)
     for i in range(num_steps):
         # Move the current state to a tensor on the correct device for model inference
-        current_state_tensor = torch.tensor(
-            state, dtype=torch.float32).unsqueeze(0).to(DEVICE)
+        current_state_tensor = torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(DEVICE)
 
         # Use the neural networks to evaluate the future performance of each controller
         with torch.no_grad():
@@ -80,7 +74,9 @@ if __name__ == '__main__':
         # Apply the chosen controller's action
         action = best_controller.update_control(state)
         state = env.step_sim(action)
-
+        time.sleep(env.dt)
+        if (i % 30 == 0):
+            pendulum_renderer.update_live_render()
         # Log data for plotting
         history['time'].append(i * DT)
         history['states'].append(state)
@@ -93,27 +89,18 @@ if __name__ == '__main__':
     states_history = np.array(history['states'])
 
     fig, axs = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
-    fig.suptitle("Controller Switching Simulation (Replication of Fig. 8)",
-                 fontsize=16)
+    fig.suptitle("Controller Switching Simulation (Replication of Fig. 8)", fontsize=16)
 
     # Plot 1: Pendulum Angle (alpha) and Cart Position (x)
-    axs[0].plot(history['time'],
-                states_history[:, 2],
-                label=r'$\alpha(t)$ - Pendulum Angle')
-    axs[0].plot(history['time'],
-                states_history[:, 0],
-                label=r'$x(t)$ - Cart Position',
-                linestyle='--')
+    axs[0].plot(history['time'], states_history[:, 2], label=r'$\alpha(t)$ - Pendulum Angle')
+    axs[0].plot(history['time'], states_history[:, 0], label=r'$x(t)$ - Cart Position', linestyle='--')
     axs[0].set_ylabel("Position (m) / Angle (rad)")
     axs[0].legend()
     axs[0].grid(True)
     axs[0].set_title("System State Trajectories")
 
     # Plot 2: Active Controller
-    axs[1].plot(history['time'],
-                history['chosen_controller'],
-                drawstyle='steps-post',
-                label='Active Controller')
+    axs[1].plot(history['time'], history['chosen_controller'], drawstyle='steps-post', label='Active Controller')
     axs[1].set_yticks(range(len(controller_names)))
     axs[1].set_yticklabels(controller_names)
     axs[1].set_ylabel("Controller")
