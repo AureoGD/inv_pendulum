@@ -9,9 +9,9 @@ import time
 
 class InvPendulumEnv(gym.Env):
 
-    def __init__(self, dt=0.002, max_step=5000, rendering=False, frame_rate=30):
+    def __init__(self, env_id, dt=0.002, max_step=5000, rendering=False, frame_rate=30):
         super().__init__()
-
+        self.env_id = env_id
         self.rendering = rendering
         self.frame_rate = frame_rate
         self.max_step = max_step

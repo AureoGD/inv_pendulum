@@ -1,0 +1,31 @@
+# env_config.yaml
+
+# --- General Environment Settings ---
+environment:
+  n_individuals: 1
+
+model_config:
+  fc1_dim: 256  # Example: using a wider network
+  fc2_dim: 256  
+
+
+# --- Logger Configuration ---
+logger_config:
+  log_dir: "sb3/cem"
+  experiment_name: "cart_pendulum"
+  log_to_csv: true
+  log_to_tensorboard: true
+  save_best_model: true
+
+# --- Training Algorithm Configuration ---
+training_config:
+  cem:
+    num_generations: 1000     # Total number of CEM generations to run
+    population_size: 100     # Number of individuals (NN weight vectors) per generation
+    elite_fraction: 0.1       # Top 10% of the population selected as elites
+    initial_std_dev: 0.5      # Initial standard deviation for sampling NN weights
+    extra_noise_scale: 0.01   # Initial scale of extra noise added to std_devs (prevents premature convergence)
+    noise_decay_factor: 0.995 # Factor to decay extra_noise_scale each generation (e.g., 0.99 to 0.999)
+    min_std_dev: 0.001        # Minimum standard deviation for parameters to maintain exploration
+    update_rule_type: "standard"
+    elite_weighting_type: "uniform"
