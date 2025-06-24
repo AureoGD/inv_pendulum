@@ -35,7 +35,7 @@ def generate_shared_start_data(controllers, env, num_initial_states, trajectory_
     datasets = {name: [] for name in controllers.keys()}
     for _ in tqdm(range(num_initial_states)):
         initial_state = np.array([
-            random.uniform(-2.0, 2.0),
+            random.uniform(-1.0, 1.0),
             0,
             random.uniform(-0.4, 0.4),  # Angle in radians
             0

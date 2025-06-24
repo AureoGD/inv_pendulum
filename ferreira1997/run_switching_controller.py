@@ -13,7 +13,7 @@ import time
 # --- Configuration ---
 MODEL_DIR = "models"
 SIMULATION_TIME = 5.0  # seconds
-DT = 0.002
+DT = 0.02
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {DEVICE}")
 
@@ -75,8 +75,8 @@ if __name__ == '__main__':
         action = best_controller.update_control(state)
         state = env.step_sim(action)
         time.sleep(env.dt)
-        if (i % 30 == 0):
-            pendulum_renderer.update_live_render()
+        # if (i % 30 == 0):
+        pendulum_renderer.update_live_render()
         # Log data for plotting
         history['time'].append(i * DT)
         history['states'].append(state)
