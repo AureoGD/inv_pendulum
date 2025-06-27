@@ -27,9 +27,9 @@ class SlidingMode():
                                       parameters of the pendulum (mc, m, l, br, g).
         """
         # Control parameters from the paper
-        self.lambda_ = 20.0  # using lambda_ to avoid keyword conflict
+        self.lambda_ = 5.0  # using lambda_ to avoid keyword conflict
         self.phi = 0.1
-        self.gamma = 5.0
+        self.gamma = 20.0
 
         # Physical parameters of the system to be controlled
         self.mc = pendulum_params.mc
@@ -50,12 +50,12 @@ class SlidingMode():
         if abs(cos_a) < 1e-3:
             ddx_required = 0.0
         else:
-            numerator = self.mr * self.g * sin(a) - (2 / 3) * self.mr * self.l * dda_desired
-            ddx_required = numerator / (self.mr * cos_a)
+            numerator = 0.5 * self.mr * self.g * sin(a) - (1 / 3) * self.mr * self.l * dda_desired
+            ddx_required = numerator / (self.mr * cos_a * 0.5)
 
         u_hat = (self.mc * ddx_required + 0.5 * self.mr * self.l * cos_a * dda_desired + self.br * dx -
                  0.5 * self.mr * self.l * sin(a) * da**2)
 
-        u = np.clip(u_hat, -1.0, 1.0) + self.gamma * np.clip(s / self.phi, -1, 1)
+        u = u_hat + self.gamma * np.clip(s / self.phi, -1, 1)
 
         return u

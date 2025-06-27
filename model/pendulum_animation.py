@@ -54,7 +54,7 @@ class PendulumLiveRenderer:
 
             # Update pendulum rod position
             pivot_y = 0  # Pivot is at y=0 (on the cart)
-            px = cart_x - self.pendulum.l * np.sin(pendulum_angle)
+            px = cart_x + self.pendulum.l * np.sin(pendulum_angle)
             py = pivot_y + self.pendulum.l * np.cos(pendulum_angle)
 
             self.pendulum_line.set_data([cart_x, px], [pivot_y, py])

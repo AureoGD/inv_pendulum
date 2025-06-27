@@ -42,7 +42,7 @@ if __name__ == '__main__':
             mode = 1  # Stabilize
             force = stabilization_controller.update_control(state)
 
-        force = np.clip(force, -3, 3)
+        # force = np.clip(force, -3, 3)
 
         history['time'].append(i * DT)
         history['states'].append(state)

@@ -18,6 +18,7 @@ def run_test():
 
     while not done:
         action = env.action_space.sample()  # Random action for now
+        # action = [10]
         obs, reward, terminated, truncated, info = env.step(action)
         history['states'].append(obs.copy())
         history['control_effort'].append(action)
@@ -35,13 +36,15 @@ def run_test():
     control_effort_history = np.array(history['control_effort'])
     time_history = np.array(history['time'])
 
-    angles_unwrapped = states_history[:, 2] * np.pi
-    angles_wrapped = (angles_unwrapped + np.pi) % (2 * np.pi) - np.pi  # Wrap for display
+    # angles_unwrapped = states_history[:, 2]
+    # angles_wrapped = (angles_unwrapped + np.pi) % (2 * np.pi) - np.pi  # Wrap for display
 
     plot_fig, plot_axs = plt.subplots(3, 1, figsize=(12, 10), sharex=True)
     plot_fig.suptitle("Simulation History: Inverted Pendulum Control", fontsize=16)
-    plot_axs[0].plot(time_history, angles_wrapped)
-    plot_axs[0].set_ylabel("Angle (rad)")
+    plot_axs[0].plot(time_history, states_history[:, 2])
+    plot_axs[0].set_ylabel("cos(a")
+    plot_axs[0].plot(time_history, states_history[:, 3])
+    plot_axs[0].set_ylabel("sin(a")
     plot_axs[0].set_title("Pendulum Angle Trajectory")
     plot_axs[0].grid(True)
     # plot_axs[0].legend()

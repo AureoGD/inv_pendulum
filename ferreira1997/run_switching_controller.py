@@ -1,112 +1,123 @@
-# run_switching_controller.py (CUDA-enabled version)
-
 import torch
 import numpy as np
-import matplotlib.pyplot as plt
 import os
+import time
 from model.inverted_pendulum import InvePendulum
 from controllers import LQR, SlidingMode
 from neural_network import PerformanceIndexNN
 from model.pendulum_animation import PendulumLiveRenderer
-import time
+from ferreira1997.switching import AdvancedSwitcher
+from ferreira1997.plot_sim import SimulationPlotter
+
 # --- Configuration ---
-# --- Configuration ---
-MODEL_DIR = "models"
-SIMULATION_TIME = 5.0  # seconds
-DT = 0.02
+MODEL_DIR = "nn_models/cbnn"
+SIMULATION_TIME = 5.0
+DT = 0.002
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {DEVICE}")
 
-if __name__ == '__main__':
-    # --- Check for trained models ---
-    if not os.path.exists(MODEL_DIR):
-        print(f"Error: Directory '{MODEL_DIR}' not found. Please run train.py first.")
-        exit()
 
-    # --- Initialize Environment and Controllers ---
+def run_simulation():
+    """
+    Main function to load models, run the simulation with the advanced switching
+    controller, and return the results.
+    """
+    # --- 1. Initialize Environment and Controllers ---
     env = InvePendulum(dt=DT)
-    pendulum_renderer = PendulumLiveRenderer(env)
-    controller_configs = {
-        "LQR": LQR(10.0, 12.60, 48.33, 9.09),  # Standard LQR gains from the paper 
-        "SM": SlidingMode(env),  # Sliding Mode controller 
-        "VF": LQR(0, 30.92, 87.63, 20.40)  # Velocity Feedback (VF) LQR gains from the paper 
-    }
-    controllers = list(controller_configs.values())
+    controller_configs = {"LQR": LQR(10.0, 12.60, 48.33, 9.09), "SM": SlidingMode(env), "VF": LQR(0, 30.92, 87.63, 20.40)}
     controller_names = list(controller_configs.keys())
 
-    # --- Load Trained Neural Network Models ---
-    models = []
+    # --- 2. Load Trained Neural Network Models ---
+    models = {}
     print("Loading trained models...")
     for name in controller_names:
         model_path = os.path.join(MODEL_DIR, f"{name.lower()}_model.pth")
         if not os.path.exists(model_path):
             print(f"Error: Model file '{model_path}' not found. Please run train.py first.")
-            exit()
+            return None, None
 
-        # Instantiate the model, move to device, then load the state dictionary
         model = PerformanceIndexNN().to(DEVICE)
         model.load_state_dict(torch.load(model_path, map_location=DEVICE))
-        model.eval()  # Set model to evaluation mode
-        models.append(model)
-    print("Models loaded successfully.")
+        model.eval()
+        models[name] = model
+    print("All models loaded successfully.")
 
-    # --- Run Simulation with Switching Logic ---
-    print("Running simulation with switching controller...")
-    # The paper uses an initial condition of alpha = 0.5 for its trajectory simulation
-    initial_state = np.array([0.0, 0.0, 0.30, 0.0])
+    # --- 3. Run Simulation with Advanced Switching Logic ---
+    print("\nRunning real-time simulation with advanced switching controller...")
+    initial_state = np.array([0.0, 0.0, 0.4, 0.0])
     state = env.reset(initial_state=initial_state)
-
-    history = {'time': [], 'states': [], 'chosen_controller': []}
+    pendulum_renderer = PendulumLiveRenderer(env)
     pendulum_renderer.init_live_render()
+
+    history = {
+        'time': [],
+        'x': [],
+        'angle': [],
+        'dx': [],
+        'da': [],
+        'active_controller': [],
+        'j_lqr': [],
+        'j_sm': [],
+        'j_vf': [],
+        'j_true': [],
+        'action': []
+    }
     num_steps = int(SIMULATION_TIME / DT)
+
+    # Initialize the advanced switcher
+    switcher = AdvancedSwitcher(controller_names)
+
     for i in range(num_steps):
-        # Move the current state to a tensor on the correct device for model inference
         current_state_tensor = torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(DEVICE)
 
-        # Use the neural networks to evaluate the future performance of each controller
         with torch.no_grad():
-            costs = [model(current_state_tensor).item() for model in models]
+            j_predictions = {name: model(current_state_tensor).item() for name, model in models.items()}
 
-        # Select the controller with the minimum predicted cost
-        best_controller_index = np.argmin(costs)
-        best_controller = controllers[best_controller_index]
+        # Use the switcher to select the controller
+        best_controller_name = switcher.select_controller(j_predictions)
+        best_controller = controller_configs[best_controller_name]
 
-        # Apply the chosen controller's action
+        # Update the switcher's internal state for the next step
+        switcher.update_state(best_controller_name, j_predictions)
+
         action = best_controller.update_control(state)
         state = env.step_sim(action)
-        time.sleep(env.dt)
-        # if (i % 30 == 0):
-        pendulum_renderer.update_live_render()
-        # Log data for plotting
+
+        # Log data
         history['time'].append(i * DT)
-        history['states'].append(state)
-        history['chosen_controller'].append(best_controller_index)
+        history['x'].append(state[0])
+        history['dx'].append(state[1])
+        history['angle'].append(state[2])
+        history['da'].append(state[3])
+        history['active_controller'].append(controller_names.index(best_controller_name))
+        history['j_lqr'].append(j_predictions['LQR'])
+        history['j_sm'].append(j_predictions['SM'])
+        history['j_vf'].append(j_predictions['VF'])
+        history['action'].append(action)
+        if (i % 30 == 0):
+            pendulum_renderer.update_live_render()
+        time.sleep(env.dt)
 
-    print("Simulation finished.")
+    print("\nSimulation finished.")
+    pendulum_renderer.close_render()
+    return history, controller_names
 
-    # --- Plot Results ---
-    # This section aims to replicate the plots shown in Figure 8 of the paper
-    states_history = np.array(history['states'])
 
-    fig, axs = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
-    fig.suptitle("Controller Switching Simulation (Replication of Fig. 8)", fontsize=16)
+def plot_simulation_results(history, controller_names):
+    """
+    Initializes and uses the SimulationPlotter class to visualize results.
+    """
+    print("Generating plots using SimulationPlotter...")
+    # Create an instance of the reusable plotter class
+    plotter = SimulationPlotter(controller_names)
+    # Call its plot method
+    plotter.plot(history, title="Controller Switching Test Results")
 
-    # Plot 1: Pendulum Angle (alpha) and Cart Position (x)
-    axs[0].plot(history['time'], states_history[:, 2], label=r'$\alpha(t)$ - Pendulum Angle')
-    axs[0].plot(history['time'], states_history[:, 0], label=r'$x(t)$ - Cart Position', linestyle='--')
-    axs[0].set_ylabel("Position (m) / Angle (rad)")
-    axs[0].legend()
-    axs[0].grid(True)
-    axs[0].set_title("System State Trajectories")
 
-    # Plot 2: Active Controller
-    axs[1].plot(history['time'], history['chosen_controller'], drawstyle='steps-post', label='Active Controller')
-    axs[1].set_yticks(range(len(controller_names)))
-    axs[1].set_yticklabels(controller_names)
-    axs[1].set_ylabel("Controller")
-    axs[1].set_xlabel("Time (s)")
-    axs[1].grid(True)
-    axs[1].set_title("Controller Selection Over Time")
-
-    plt.tight_layout(rect=[0, 0, 1, 0.96])
-    plt.show()
+if __name__ == '__main__':
+    if not os.path.exists(MODEL_DIR) or not os.listdir(MODEL_DIR):
+        print(f"Error: Directory '{MODEL_DIR}' is empty or does not exist. Please run train.py first.")
+    else:
+        simulation_history, names = run_simulation()
+        if simulation_history:
+            plot_simulation_results(simulation_history, names)

@@ -11,7 +11,7 @@ from cont_env.pendulum_env import InvPendulumEnv
 import visualize
 
 
-def test_winner(config_path, winner_path="sb3/neat/run_2025-06-24_11-18-52/best_genome.pkl"):
+def test_winner(config_path, winner_path="sb3/neat/run_2025-06-24_11-18-02/best_genome.pkl"):
     """
     Loads the winning genome and runs a rendered simulation.
     """

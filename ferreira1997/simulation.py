@@ -8,14 +8,14 @@ from controllers import LQR, SlidingMode
 import time
 # --- Configuration ---
 # Change this variable to test different controllers: 'LQR', 'SM', or 'VF'
-CONTROLLER_TO_TEST = 'SM'
+CONTROLLER_TO_TEST = 'VF'
 
 SIMULATION_TIME = 5.0  # seconds
 DT = 0.002
 
 # We use the same initial condition as the paper's demonstration trajectory in Figure 7
 # The initial condition used in the trajectory simulation is alpha=0.5. All other state variables equal zero initially.
-INITIAL_STATE = np.array([0.0, 0.0, 0.4, 0.0])
+INITIAL_STATE = np.array([0.1, 0.0, 0.2, 0.0])
 
 if __name__ == '__main__':
     # --- Initialize Environment and All Controllers ---
@@ -51,6 +51,7 @@ if __name__ == '__main__':
         history['states'].append(state)
 
         # Calculate the control action (force u)
+
         action = chosen_controller.update_control(state)
         history['control_effort'].append(action)
 

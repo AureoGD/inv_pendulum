@@ -4,6 +4,8 @@ import numpy as np
 import random
 from model.inverted_pendulum import InvePendulum
 from model.pendulum_animation import PendulumLiveRenderer
+from ferreira1997.controllers import LQR, SlidingMode
+from swingup.swup import SwingUp
 import time
 
 
@@ -22,25 +24,41 @@ class InvPendulumEnv(gym.Env):
         if self.rendering:
             self.pendulum_renderer = PendulumLiveRenderer(self.inv_pendulum)
 
-        self.action_space = gym.spaces.Box(low=-1, high=1, shape=(1, ), dtype=np.float32)
+        self.action_space = gym.spaces.Discrete(n=4)
         # For now, a simple observation space. The satates must be normalized
-        self.observation_space = gym.spaces.Box(low=-1, high=1, shape=(5, ), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(low=-1, high=1, shape=(4, ), dtype=np.float32)
+
+        # Controllers:
+        self.lqr = LQR(10.0, 12.60, 48.33, 9.09)
+        self.sm = SlidingMode(self.inv_pendulum)
+        self.vf = LQR(0, 30.92, 87.63, 20.40)
+        self.swup = SwingUp(self.inv_pendulum)
 
         self.scale_factor = 0.75
         self.ep_reward = 0
         self.current_step = 0
         self.ep = 0
+        self.st = None
 
     def step(self, action):
         self.current_step += 1
-        force = self.inv_pendulum.f_max * np.clip(action[0], -1, 1)
-        sys_sts = self.inv_pendulum.step_sim(force)
-        new_state = self._norm(sys_sts)
+        if action == 0:
+            force = self.lqr.update_control(self.st)
+        elif action == 1:
+            force = self.sm.update_control(self.st)
+        elif action == 2:
+            force = self.vf.update_control(self.st)
+        elif action == 3:
+            force = self.swup.update_control(self.st)
+        else:
+            force = 0
+        self.st = self.inv_pendulum.step_sim(force)
+        new_state = self._norm(self.st)
         if self.rendering and (self.current_step % self.frame_rate == 0 or self.current_step == 0):
             self.render()
             time.sleep(self.dt * self.frame_rate)
 
-        reward = self._reward(sys_sts)
+        reward = self._reward(new_state)
         done = self._done()
         self.ep_reward += reward
 
@@ -61,11 +79,12 @@ class InvPendulumEnv(gym.Env):
             self.scale_factor * np.random.uniform(-self.inv_pendulum.x_max, self.inv_pendulum.x_max), 0,
             self.scale_factor * np.random.uniform(-np.pi, np.pi), 0
         ])
-        state = self._norm(self.inv_pendulum.reset(x0))
+        # x0 = np.array([0, 0, np.pi, 0])
+        self.st = self.inv_pendulum.reset(x0)
+        state = self._norm(self.st)
 
         if self.rendering:
             self.pendulum_renderer.init_live_render()
-            self.render()
 
         return state, {"Episode": self.ep, "Episode reward": ep_r}
 
@@ -83,20 +102,17 @@ class InvPendulumEnv(gym.Env):
     def _norm(self, states):
         x = states[0] / self.inv_pendulum.x_max
         dx = states[1] / self.inv_pendulum.v_max
-        a = states[2]
-
-        cos_a = np.cos(a)
-        sin_a = np.sin(a)
+        a = states[2] / np.pi
         da = states[3] / self.inv_pendulum.da_max
-        return np.array([x, dx, cos_a, sin_a, da]).reshape(5, )
+        return np.array([x, dx, a, da]).reshape(4, )
 
     def _reward(sel, state):
         pos = abs(state[0])
-        angle_reward = np.cos(state[2])
+        angle = abs(state[2])
         r = 0
 
         # model PPO 2025-06-19_11-35-44
-        if angle_reward >= np.cos(0.2):
+        if angle < 0.2:
             r += 1 + (2 - pos) * 0.5
 
         # model PPO 2025-06-19_10-51-44

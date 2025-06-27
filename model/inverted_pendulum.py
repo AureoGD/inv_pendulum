@@ -41,7 +41,7 @@ class InvePendulum():
         self.g = 9.8  # Gravitational acceleration (m/s^2)
 
         # System constraints
-        self.f_max = 3.0  # Max force (N)
+        self.f_max = 5.0  # Max force (N) 6.5 stabilize VF
         self.v_max = 3.0  # Max velocity (m/s)
         self.x_max = 2.0  # Max position (m)
         self.da_max = 10  # Max angular speed (rad/s)

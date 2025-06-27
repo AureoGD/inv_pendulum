@@ -4,3 +4,6 @@ models/
 teste.py
 sb3
 tmp
+nn_models/
+nn_tensorboard/
+nn_model
